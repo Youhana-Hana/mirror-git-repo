@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#USAGE
+#  ./mirror-gitlab -s url_of_old_repo -d url_of_new_repo
+
+#bash option stop on first error
+set -e
+
+while getopts s:d: option
+do
+case "${option}"
+in
+s) SRC=${OPTARG};;
+d) DEST=${OPTARG};;
+esac
+done
+
+if [ -z "$SRC" ]
+  then
+    echo -e "Error!, No source repo supplied\n"
+    echo -e "./mirror-gitlab -s url_of_old_repo -d url_of_new_repo"
+    exit 1
+fi
+
+if [ -z "$DEST" ]
+  then
+    echo -e "Error!, No target repo supplied\n"
+    echo -e "./mirror-gitlab -s url_of_old_repo -d url_of_new_repo\n"
+    exit 1
+fi
+
+echo -e "\nMirroring branches and tag from $SRC to $DEST\n"
+
+rm -rf ./tmp
+mkdir tmp
+cd tmp
+
+echo -e "\nFetching all of the remote branches and tags:\n"
+git clone --mirror $SRC mirror
+
+cd mirror
+
+echo -e "\nViewing all "old repo" local and remote branches:\n"
+git branch -a
+
+echo -e "\nViewing all "old repo" tags\n"
+git tag
+
+
+echo -e "\nAdding new origin\n"
+git remote add new-origin $DEST 
+
+echo -e "\nPushing all branches and tags to new repo....\n"
+git push new-origin --mirror
+
+echo -e "\nCleaning...\n"
+cd ../..
+rm -rf ./tmp
+
+echo -e "Completed :)\n"
